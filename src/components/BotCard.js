@@ -9,13 +9,26 @@ const botTypeClasses = {
   Captain: "icon star",
 };
 
-function BotCard({ bot,handleBotClick }) {
+export default function BotCard({ bot, deleteBotsArmy, addBotsArmy}) {
+
+
+  function  handleClick(chooseBot){
+    // console.log("Handling click")
+    addBotsArmy(chooseBot)
+  }
+
+  function handleDelete(){
+    deleteBotsArmy(bot)
+
+  }
+
+
   return (
     <div className="ui column">
       <div
         className="ui card"
         key={bot.id}
-        onClick={() => handleBotClick(bot,"show-bot-specs")}
+        onClick={() => handleClick(bot)}
       >
         <div className="image">
           <img alt="oh no!" src={bot.avatar_url} />
@@ -47,11 +60,7 @@ function BotCard({ bot,handleBotClick }) {
             <div className="ui center aligned segment basic">
               <button
                 className="ui mini red button"
-                onClick={(e) =>{
-                  e.stopPropagation()
-                   {handleBotClick(bot,"release-bot")}
-                  }
-                  
+                onClick={() => handleDelete(bot)
                 }
               >
                 x
@@ -63,5 +72,3 @@ function BotCard({ bot,handleBotClick }) {
     </div>
   );
 }
-
-export default BotCard;

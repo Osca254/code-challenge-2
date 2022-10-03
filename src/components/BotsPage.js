@@ -1,118 +1,43 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
 import YourBotArmy from "./YourBotArmy";
 import BotCollection from "./BotCollection";
-import BotCard from "./BotCard";
-import BotSpecs from "./BotSpecs";
-// import SortBar from "./SortBar";
 
-function BotsPage() {
-  //start here with your code for step one
-  const botsUrl = " http://localhost:8002/bots";
+export default function BotsPage() {
   const [bots, setBots] = useState([]);
-  const [botsListed, setBotsListed] = useState([]);
-  const [showBotSpecs, setShowBotSpecs] = useState(null);
-  const [filteredBots, setFilteredBots] = useState([]);
-  const [showSortBar, setShowSortBar] = useState(true)
-  const sortStrategy = useRef({ health: 1, damage: 1, armor: 1 })
-  useEffect(()=> {
-    fetch(`${botsUrl}`)
-    .then(response => response.json())
-    .then(data => {
-      setBots(data);
-      setFilteredBots(data);
-    });
-  }, [])
-  function listedBot(bot) {
-    return Boolean(botsListed.find(botListed => botListed.id === bot.id))
+  const [chooseBots, setChooseBots] = useState([])
+
+  useEffect(()=>{
+    fetch('http://localhost:8002/bots')
+    .then((response)=> response.json())
+    .then((data)=> setBots(data));
+  }, []);
+
+  function addBotsArmy(bot){
+    setChooseBots((prevbot)=>{
+      return [
+        ...prevbot,bot
+      ]
+    })
   }
 
-  function getBotsOfSameClass (bot) {
-    return botsListed.find(botListed => botListed.bot_class === bot.bot_class)
-  }
-
-  function deleteBot(botToDelete){
-    fetch(`${botsUrl}/${botToDelete.id}`, {
-      method: 'DELETE',
+  function deleteBotsArmy(bot){
+    const filterbots = bots.filter(
+			(singlebot) => singlebot.id !==  bot.id
+		);
+    const   deleteConfig =  {
+      method: "DELETE",
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    })
-    .then(response => response.json())
-    .then(() => {
-      setBots(bots.filter(currentBot => currentBot.id !== botToDelete.id))
-      setBotsListed(botsListed.filter(botListed => botListed.id !== botToDelete.id))
-    })
-  }
-
-  function handleBotClick(bot, action){
-    switch(action){
-      case "release-bot":
-        deleteBot(bot)   
-        break;
-             
-      case "enlist-bot":
-        const listedBotsOfSameClass = getBotsOfSameClass(bot);
-        if(!listedBotsOfSameClass){
-          setBotsListed([...botsListed, bot])
-          setFilteredBots(filteredBots.filter(currentBot => currentBot.id !== bot.id))
-        } else {
-          alert(`${listedBotsOfSameClass.name} has already been enlisted for the ${bot.bot_class} role`)
-        }
-        break;
-
-      case "delist-bot":
-        setBotsListed(botsListed.filter(currentBot => currentBot.id !== bot.id))
-        setFilteredBots([...filteredBots, bot])
-        break;
-
-      case "show-all-bots":
-        setShowBotSpecs(null);
-        setShowSortBar(true)
-        break;
-  
-      case "show-bot-specs":
-        setShowBotSpecs(bot);
-        setShowSortBar(false);
+        "Content-Type": "application/json",
+      } 
     }
+    fetch(`http://localhost:8002/bots/${bot.id}`,deleteConfig)
+      .then(()=>setBots(filterbots))
   }
-
-  function sortBots(data, sortBy){
-    data.sort((a, b) => {
-      if(a[sortBy] > b[sortBy]){
-        return sortStrategy.current[sortBy] * 1
-      }else if(a[sortBy] < b[sortBy]){
-        return sortStrategy.current[sortBy] * -1
-      } else {
-        return 0
-      }
-    })
-
-    return data
-  }
-
-
-  function updateSortStrategy(sortBy){
-    sortStrategy.current[sortBy] *= -1 
-  }
-
-
-  function handleSortAction(sortBy){
-    updateSortStrategy(sortBy)
-    setFilteredBots(sortBots([...filteredBots], sortBy))
-  }
-
-  function botsList (botsArray) {
-    return botsArray.map(bot => <BotCard key={bot.id} bot={bot} handleBotClick={handleBotClick} /> )
-  }
-
-  return (
-    <div>
-       <YourBotArmy botsListed={botsList(botsListed)} />
-      {showSortBar ? <SortBar handleSortAction={handleSortAction}/> : <div></div>}
-      {showBotSpecs ? <BotSpecs bot={showBotSpecs} handleBotClick={handleBotClick} alreadyListedBot={listedBot(showBotSpecs)} /> : <BotCollection filteredBots={botsList(filteredBots)} />}
-    </div>
-  )
-  }
-
-export default BotsPage;
+  
+    return (
+      <div>
+        <YourBotArmy bots={chooseBots} />
+        <BotCollection bots={bots} addBotsArmy={addBotsArmy} deleteBotsArmy={deleteBotsArmy} />
+      </div>
+    )
+}
